@@ -11,19 +11,12 @@ import {
 import './App.css';
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import CalApp from './pages/Home';
 
-function App({ signOut }) {
+function App({ signOut }: {signOut: any}) {
   return (
     <View className="App">
-      <FullCalendar
-        plugins={[ dayGridPlugin ]}
-        initialView="dayGridMonth"
-        weekends={true}
-        events={[
-          { title: 'event 1', date: '2022-09-30' },
-          { title: 'event 2', date: '2022-10-05' }
-        ]}
-      />
+      <CalApp />
       <Button onClick={signOut}>Sign Out</Button>
     </View>
   );

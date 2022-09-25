@@ -107,9 +107,9 @@ export default class CalApp extends React.Component<{}, CalAppState> {
   }
 
   handleEventClick = (clickInfo: EventClickArg) => {
-    if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
-      clickInfo.event.remove()
-    }
+    // if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
+    //   clickInfo.event.remove()
+    // }
   }
 
   handleEvents = (events: EventApi[]) => {
