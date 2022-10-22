@@ -11,6 +11,9 @@ export const getReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;
@@ -29,8 +32,42 @@ export const listReservations = /* GraphQL */ `
         end_date
         createdAt
         updatedAt
+        _version
+        _deleted
+        _lastChangedAt
       }
       nextToken
+      startedAt
+    }
+  }
+`;
+export const syncReservations = /* GraphQL */ `
+  query SyncReservations(
+    $filter: ModelReservationFilterInput
+    $limit: Int
+    $nextToken: String
+    $lastSync: AWSTimestamp
+  ) {
+    syncReservations(
+      filter: $filter
+      limit: $limit
+      nextToken: $nextToken
+      lastSync: $lastSync
+    ) {
+      items {
+        id
+        owner
+        description
+        start_date
+        end_date
+        createdAt
+        updatedAt
+        _version
+        _deleted
+        _lastChangedAt
+      }
+      nextToken
+      startedAt
     }
   }
 `;

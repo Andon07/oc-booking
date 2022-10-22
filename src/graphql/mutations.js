@@ -14,6 +14,9 @@ export const createReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;
@@ -30,6 +33,9 @@ export const updateReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;
@@ -46,6 +52,9 @@ export const deleteReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;

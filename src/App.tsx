@@ -16,7 +16,7 @@ import CalApp from './pages/Home';
 function App({ signOut }: {signOut: any}) {
   return (
     <View className="App">
-      <CalApp />
+      <CalApp weekendsVisible={true} currentEvents={[]} />
       <Button onClick={signOut}>Sign Out</Button>
     </View>
   );

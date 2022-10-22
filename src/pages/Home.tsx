@@ -3,56 +3,46 @@ import FullCalendar, { EventApi, DateSelectArg, EventClickArg, EventContentArg, 
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { INITIAL_EVENTS, createEventId } from './event-utils'
+import { createEventId, INITIAL_EVENTS, updateEvents } from './event-utils'
+import { EventInput } from '@fullcalendar/react'
+import { DataStore } from 'aws-amplify';
+import { Reservation } from '../models/index'
+
+
 import './home.css'
+import { constants } from 'buffer'
 
 interface CalAppState {
   weekendsVisible: boolean
-  currentEvents: EventApi[]
+  currentEvents: EventInput[]
 }
 
-export default class CalApp extends React.Component<{}, CalAppState> {
+export const CalApp: React.FC<CalAppState> = ({weekendsVisible, currentEvents}) => {
 
-  state: CalAppState = {
-    weekendsVisible: true,
-    currentEvents: []
-  }
+  const [weekendsVis, setWeekendsVis] = React.useState(weekendsVisible);
+  const [curEvents, setCurEvents] = React.useState(currentEvents)
 
-  render() {
-    return (
-      <div className='cal-app'>
-        {this.renderSidebar()}
-        <div className='cal-app-main'>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            headerToolbar={{
-              left: 'prev,next today',
-              center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            }}
-            initialView='dayGridMonth'
-            editable={true}
-            selectable={true}
-            selectMirror={true}
-            dayMaxEvents={true}
-            weekends={this.state.weekendsVisible}
-            initialEvents={INITIAL_EVENTS} // alternatively, use the `events` setting to fetch from a feed
-            select={this.handleDateSelect}
-            eventContent={renderEventContent} // custom render function
-            eventClick={this.handleEventClick}
-            eventsSet={this.handleEvents} // called after events are initialized/added/changed/removed
-            /* you can update a remote database when these fire:
-            eventAdd={function(){}}
-            eventChange={function(){}}
-            eventRemove={function(){}}
-            */
-          />
-        </div>
-      </div>
-    )
-  }
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const reservations = await DataStore.query(Reservation); 
+      console.log("Reservations retrieved successfully!", JSON.stringify(reservations, null, 2));
+      const ressys = reservations.map((res) => ({
+          id: res.id,
+          title: res.description ? res.description : "None",
+          start: res.start_date,
+          end: res.end_date
+        })
+      )
+      setCurEvents(ressys)
+    }
+  
+    // call the function
+    fetchData()
+      // make sure to catch any error
+      .catch(console.error);
+  }, [])
 
-  renderSidebar() {
+  const renderSidebar = () => {
     return (
       <div className='cal-app-sidebar'>
         <div className='cal-app-sidebar-section'>
@@ -67,58 +57,66 @@ export default class CalApp extends React.Component<{}, CalAppState> {
           <label>
             <input
               type='checkbox'
-              checked={this.state.weekendsVisible}
-              onChange={this.handleWeekendsToggle}
+              checked={weekendsVis}
+              onChange={handleWeekendsToggle}
             ></input>
             toggle weekends
           </label>
         </div>
         <div className='cal-app-sidebar-section'>
-          <h2>All Events ({this.state.currentEvents.length})</h2>
+          <h2>All Events ({currentEvents.length})</h2>
           <ul>
-            {this.state.currentEvents.map(renderSidebarEvent)}
+            {currentEvents.map(renderSidebarEvent)}
           </ul>
         </div>
       </div>
     )
   }
 
-  handleWeekendsToggle = () => {
-    this.setState({
-      weekendsVisible: !this.state.weekendsVisible
-    })
+  const handleWeekendsToggle = () => {
+      setWeekendsVis(!weekendsVis)
   }
 
-  handleDateSelect = (selectInfo: DateSelectArg) => {
+  const handleDateSelect = async (selectInfo: DateSelectArg) => {
     let title = prompt('Please enter a new title for your event')
     let calendarApi = selectInfo.view.calendar
 
     calendarApi.unselect() // clear date selection
 
-    if (title) {
-      calendarApi.addEvent({
-        id: createEventId(),
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay
-      })
+    try {
+      const newID = await DataStore.save(
+        new Reservation({
+          description: title,
+          start_date: selectInfo.startStr,
+          end_date: selectInfo.endStr,
+          owner: "Admin"
+        })
+      );
+      if (newID) {
+        calendarApi.addEvent({
+          id: createEventId(),
+          title: title!,
+          start: selectInfo.startStr,
+          end: selectInfo.endStr,
+          allDay: selectInfo.allDay
+        })
+      }
+      console.log("Post saved successfully!");
+    } catch (error) {
+      console.log("Error saving post", error);
     }
   }
 
-  handleEventClick = (clickInfo: EventClickArg) => {
+  const handleEventClick = (clickInfo: EventClickArg) => {
     // if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
     //   clickInfo.event.remove()
     // }
   }
 
-  handleEvents = (events: EventApi[]) => {
-    this.setState({
-      currentEvents: events
-    })
+  const handleEvents = (events: EventInput[]) => {
+    setCurEvents(events)
   }
 
-}
 
 function renderEventContent(eventContent: EventContentArg) {
   return (
@@ -129,7 +127,7 @@ function renderEventContent(eventContent: EventContentArg) {
   )
 }
 
-function renderSidebarEvent(event: EventApi) {
+function renderSidebarEvent(event: EventInput) {
   return (
     <li key={event.id}>
       <b>{formatDate(event.start!, {year: 'numeric', month: 'short', day: 'numeric'})}</b>
@@ -137,3 +135,37 @@ function renderSidebarEvent(event: EventApi) {
     </li>
   )
 }
+    return (
+      <div className='cal-app'>
+        {renderSidebar()}
+        <div className='cal-app-main'>
+          <FullCalendar
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            }}
+            initialView='dayGridMonth'
+            editable={true}
+            selectable={true}
+            selectMirror={true}
+            dayMaxEvents={true}
+            weekends={weekendsVis}
+            events={curEvents} // alternatively, use the `events` setting to fetch from a feed
+            select={handleDateSelect}
+            eventContent={renderEventContent} // custom render function
+            eventClick={handleEventClick}
+            //eventsSet={handleEvents} // called after events are initialized/added/changed/removed
+            /* you can update a remote database when these fire:
+            eventAdd={function(){}}
+            eventChange={function(){}}
+            eventRemove={function(){}}
+            */
+          />
+        </div>
+      </div>
+    )
+}
+
+export default CalApp

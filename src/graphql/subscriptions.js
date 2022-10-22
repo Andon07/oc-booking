@@ -11,6 +11,9 @@ export const onCreateReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;
@@ -24,6 +27,9 @@ export const onUpdateReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;
@@ -37,6 +43,9 @@ export const onDeleteReservation = /* GraphQL */ `
       end_date
       createdAt
       updatedAt
+      _version
+      _deleted
+      _lastChangedAt
     }
   }
 `;
